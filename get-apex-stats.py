@@ -3,6 +3,8 @@ import json
 import obspython as obs
 import os
 
+run_boolean = False
+
 #rank_value and prev_rank_value need to be different at the start of the script.
 rank_image_url = ""
 rank_value = "0"
@@ -13,6 +15,7 @@ check_interval = 15
 rank_img_source = ""
 rank_val_source = ""
 default_location = "ranks"
+
 
 
 def script_description():
@@ -28,11 +31,12 @@ def script_properties():
     
     props = obs.obs_properties_create()
 
+    obs.obs_properties_add_bool(props,"run_boolean","Run?")
+
     #refresh interval
     obs.obs_properties_add_int(props, "check_interval_int", "Update Interval (seconds)", 1, 120, 1)
 
     #rank image dimensions
-    # Width and height
     obs.obs_properties_add_int(props, "rank_height", "Height (pixels)", 1, 1000, 1)
     obs.obs_properties_add_int(props, "rank_width", "Width (pixels)", 1, 1000, 1)
 
@@ -95,6 +99,8 @@ def script_defaults(settings):
     if debug:
         print("Function: script defaults")
     
+     
+    obs.obs_data_set_default_bool(settings, "run_boolean", False)
     obs.obs_data_set_default_int(settings, "check_interval_int", 60)
     obs.obs_data_set_default_int(settings, "rank_height", 200)
     obs.obs_data_set_default_int(settings, "rank_width", 200)
@@ -104,20 +110,25 @@ def script_update(settings):
     if debug:
         print("Function: script update")
     
-
     global check_interval
     global rank_img_source
     global rank_val_source
+    global run_boolean
 
     rank_height = obs.obs_data_get_int(settings, "rank_height")
     rank_width = obs.obs_data_get_int(settings, "rank_width")
     rank_img_source = obs.obs_data_get_string(settings,"rank_img_source")
     rank_val_source = obs.obs_data_get_string(settings,"rank_val_source")
 
+    json_file = obs.obs_data_get_string(settings, "json_file")
+
     setup_source(rank_img_source, rank_height, rank_width)
     
     obs.timer_remove(update_rank)
 
+    if not run_boolean:
+        return
+    
     username = obs.obs_data_get_string(settings,"userName")
     platform = obs.obs_data_get_string(settings,"platform_select")
     apikey = obs.obs_data_get_string(settings,"api_key")
