@@ -3,6 +3,7 @@ import json
 import obspython as obs
 import os
 
+
 run_boolean = False
 
 #rank_value and prev_rank_value need to be different at the start of the script.
@@ -119,23 +120,25 @@ def script_update(settings):
     rank_width = obs.obs_data_get_int(settings, "rank_width")
     rank_img_source = obs.obs_data_get_string(settings,"rank_img_source")
     rank_val_source = obs.obs_data_get_string(settings,"rank_val_source")
-
-    json_file = obs.obs_data_get_string(settings, "json_file")
-
-    setup_source(rank_img_source, rank_height, rank_width)
+    run_boolean = obs.obs_data_get_bool(settings, "run_boolean")
     
+    print("removing timer")
     obs.timer_remove(update_rank)
 
     if not run_boolean:
         return
     
+    setup_source(rank_img_source, rank_height, rank_width)
+
     username = obs.obs_data_get_string(settings,"userName")
     platform = obs.obs_data_get_string(settings,"platform_select")
     apikey = obs.obs_data_get_string(settings,"api_key")
     
+    print("adding timer")
     obs.timer_add(update_rank(username, platform, apikey), check_interval * 1000)
 
 def update_rank(username, platform, apikey):
+    print("updating rank")
     # If debug is enabled, print out this bit of text
     if debug:
         print("Function: update rank")
@@ -172,7 +175,7 @@ def update_rank(username, platform, apikey):
     rank_value = rankScore.get("value")
     rank_value = str(rank_value)[:-2]
     
-    #cache the image returned from the call
+    #cache the image returned from the call and set its location to the image source
     location = cache_image(rank_image_url, default_location)
 
     image_source = obs.obs_get_source_by_name(rank_img_source)
@@ -204,7 +207,7 @@ def cache_image(link, location):
     # Get the file name from the image link
     filename = link.split("/")[-1]
 
-    # Check if doesn't exist. If so, then download it and store it in the cache
+    # Check if image doesn't exist. If so, then download and store it in the cache
     if not os.path.isfile(cache_folder + filename):
         r = requests.get(link)
         with open(cache_folder + filename, "wb") as f:
